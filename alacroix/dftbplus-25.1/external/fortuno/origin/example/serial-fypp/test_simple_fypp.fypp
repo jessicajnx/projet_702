@@ -1,0 +1,63 @@
+! This file is part of Fortuno.
+! Licensed under the BSD-2-Clause Plus Patent license.
+! SPDX-License-Identifier: BSD-2-Clause-Patent
+
+#:include "fortuno_serial.fypp"
+
+!> Demonstrates the realization of simple unit tests using Fypp macros.
+module test_simple_fypp
+  use mylib_fypp, only : factorial
+  use fortuno_serial, only : is_equal, suite => serial_suite_item, test_list
+  $:FORTUNO_SERIAL_IMPORTS()
+  implicit none
+
+  private
+  public :: tests
+
+contains
+
+
+  $:TEST("factorial_0")
+    @:CHECK(factorial(0) == 1)
+  $:END_TEST()
+
+
+  $:TEST("factorial_1", label="simple")
+
+    ! It is possible to use ASSERT() instead of CHECK(). If the check condition is not fulfilled,
+    ! ASSERT() causes the test code to return immediately, while CHECK() only logs the failure and
+    ! continues.
+    !
+    @:ASSERT(factorial(1) == 1)
+
+  $:END_TEST()
+
+
+  $:TEST("factorial_2", label="simple")
+    ! Two failing checks (due to the implementation 'bug' in factorial() in the mylib library),
+    ! you should see info about both in the output
+    @:CHECK(is_equal(factorial(2), 2), msg="Test failed because of a bug in the tested routine")
+    @:CHECK(factorial(2) == 2, msg="Also this test failed because of a bug in the tested routine")
+  $:END_TEST()
+
+
+  ! Returns the tests from this module.
+  function tests()
+    type(test_list) :: tests
+
+    tests = test_list([&
+        ! Adding a single test not belonging to any test suite
+        $:TEST_ITEMS(suffix=",")
+
+        ! Packing further tests into a suite in order to introduce more structure
+        ! (e.g. running only tests being part of a given suite)
+        suite("simple", test_list([&
+            $:TEST_ITEMS(label="simple")
+        ]))&
+    ])
+    #! Stop if there are tests without corresponding generated test_item constructors
+    $:STOP_ON_MISSING_TEST_ITEMS()
+
+  end function tests
+
+end module test_simple_fypp

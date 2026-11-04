@@ -1,0 +1,96 @@
+! This file is part of Fortuno.
+! Licensed under the BSD-2-Clause Plus Patent license.
+! SPDX-License-Identifier: BSD-2-Clause-Patent
+
+#:include "fortuno_coarray.fypp"
+
+module test_simple_fypp
+  use mylib, only : broadcast
+  use fortuno_coarray, only : str, context => coa_context, is_equal,&
+      & suite => coa_pure_suite_item, test_list
+  $:FORTUNO_COARRAY_IMPORTS()
+  implicit none
+
+contains
+
+
+  !> Broadcast test with collective communication
+  !!
+  !! Note: as coarray parallelism might be implemented via threads, coarray tests must be "pure" and
+  !! use a passed context object to signalize test events. The Fypp macros below automaticaly handle
+  !! this (using the configurable name "ctx" for the context instance).
+  !!
+  $:PURE_TEST("broadcast")
+    integer, parameter :: sourceimg = 1, sourceval = 100, otherval = -1
+    integer :: buffer
+
+    character(:), allocatable :: msg
+
+    ! GIVEN source image contains a different integer value as all other images
+    if (this_image() == sourceimg) then
+      buffer = sourceval
+    else
+      buffer = otherval
+    end if
+
+    ! WHEN source image broadcasts its value
+    call broadcast(buffer, sourceimg)
+
+    ! THEN each image must contain source image's value
+    !
+    ! Note: PURE_CHECK() and PURE_ASSERT() calls are collective calls, all images must call them
+    ! with their local result synchronously.
+    !
+    @:PURE_CHECK(is_equal(buffer, sourceval), msg=msg)
+
+  $:END_PURE_TEST()
+
+
+  !> Broadcast test with collective communication
+  $:PURE_TEST("broadcast_fail3")
+    integer, parameter :: sourceimg = 1, sourceval = 100, otherval = -1
+    integer :: buffer
+
+    character(:), allocatable :: msg
+
+    ! GIVEN source image contains a different integer value as all other images
+    if (this_image() == sourceimg) then
+      buffer = sourceval
+    else
+      buffer = otherval
+    end if
+
+    ! WHEN source image broadcasts its value
+    call broadcast(buffer, sourceimg)
+
+    ! Make every third image fail for demonstration purposes
+    if (mod(this_image() - 1, 3) == 2) then
+      buffer = sourceval + 1
+      msg = "Failing on image " //  str(this_image()) // " on purpose"
+    end if
+
+    ! THEN each image must contain source image's value
+    !
+    ! It is possible to use ASSERT() instead of CHECK(). If the check condition is not fulfilled,
+    ! ASSERT() causes the test code to return immediately, while CHECK() only logs the failure and
+    ! continues.
+    !
+    @:PURE_ASSERT(is_equal(buffer, sourceval), msg=msg)
+
+  $:END_PURE_TEST()
+
+
+  ! Returns the test items from this module
+  function tests()
+    type(test_list) :: tests
+
+    tests = test_list([&
+        suite("simple_fypp", test_list([&
+            $:TEST_ITEMS()
+        ]))&
+    ])
+    $:STOP_ON_MISSING_TEST_ITEMS()
+
+  end function tests
+
+end module test_simple_fypp

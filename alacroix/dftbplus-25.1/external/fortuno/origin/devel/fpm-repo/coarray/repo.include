@@ -1,0 +1,14 @@
+LICENSE.txt
+include/
+include/fortuno_coarray.fpp
+src/
+src/fortuno.f90
+src/fortuno/
+src/fortuno/**
+src/fortuno_coarray.f90
+src/fortuno_coarray/
+src/fortuno_coarray/**
+test/
+test/export/
+test/export/coarray/
+test/export/coarray/**

@@ -1,4 +1,0 @@
-*     text=auto
-
-# Fortran include files
-*.inc linguist-language=Fortran

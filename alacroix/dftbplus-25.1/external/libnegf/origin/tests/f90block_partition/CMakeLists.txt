@@ -1,1 +1,0 @@
-setup_f90_test(f90block_partition block_partition.F90)

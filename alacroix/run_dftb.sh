@@ -23,7 +23,5 @@ export DFTBPLUS_PARAM_DIR="$HOME/opt/slakos/dftb_input"
 
 BINARY_PATH="$HOME/opt/dftbplus/bin/dftb+"
 
-echo "==> Début du calcul DFTB+ ($(date))"
 cd $DFTBPLUS_PARAM_DIR
 mpirun -np $SLURM_NTASKS $BINARY_PATH
-echo "==> Calcul terminé ($(date))"
